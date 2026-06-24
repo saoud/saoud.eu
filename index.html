@@ -1,169 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saoud — Terminal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #000;
+      --text: #fff;
+      --accent: #0bc;
+      --green: #0f0;
+      --pink: #ff0096;
+      --muted: #555;
+      --font-mono: 'Fira Code', 'Courier New', monospace;
+    }
 
-<html> 
-<head> 
-<title>Saoud</title> 
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script> 
-<style type="text/css"> 
-	body {
-		background-color: #000
-	}
-	#console {
-		font-family: courier, monospace;
-		color: #fff;
-		width:750px;
-		margin-left:auto;
-		margin-right:auto;
-		margin-top:100px;
-		font-size:14px;
-	}
-	a {
-		color: #0bc;
-		text-decoration: none;
-	}
-	#a {
-		color: #0f0;
-	}
-	#c {
-		color: #0bc;
-	}
-	#b {
-		color: #ff0096;
-	}
-</style> 
-</head> 
-<body> 
-<script type="text/javascript"> 
-	var Typer={
-	text: null,
-	accessCountimer:null,
-	index:0, // current cursor position
-	speed:2, // speed of the Typer
-	file:"", //file, must be setted
-	accessCount:0, //times alt is pressed for Access Granted
-	deniedCount:0, //times caps is pressed for Access Denied
-	init: function(){// inizialize Hacker Typer
-		accessCountimer=setInterval(function(){Typer.updLstChr();},500); // inizialize timer for blinking cursor
-		$.get(Typer.file,function(data){// get the text file
-			Typer.text=data;// save the textfile in Typer.text
-			Typer.text = Typer.text.slice(0, Typer.text.length-1);
-		});
-	},
- 
-	content:function(){
-		return $("#console").html();// get console content
-	},
- 
-	write:function(str){// append to console content
-		$("#console").append(str);
-		return false;
-	},
- 
-	makeAccess:function(){//create Access Granted popUp      FIXME: popup is on top of the page and doesn't show is the page is scrolled
-		Typer.hidepop(); // hide all popups
-		Typer.accessCount=0; //reset count
-		var ddiv=$("<div id='gran'>").html(""); // create new blank div and id "gran"
-		ddiv.addClass("accessGranted"); // add class to the div
-		ddiv.html("<h1>ACCESS GRANTED</h1>"); // set content of div
-		$(document.body).prepend(ddiv); // prepend div to body
-		return false;
-	},
-	makeDenied:function(){//create Access Denied popUp      FIXME: popup is on top of the page and doesn't show is the page is scrolled
-		Typer.hidepop(); // hide all popups
-		Typer.deniedCount=0; //reset count
-		var ddiv=$("<div id='deni'>").html(""); // create new blank div and id "deni"
-		ddiv.addClass("accessDenied");// add class to the div
-		ddiv.html("<h1>ACCESS DENIED</h1>");// set content of div
-		$(document.body).prepend(ddiv);// prepend div to body
-		return false;
-	},
- 
-	hidepop:function(){// remove all existing popups
-		$("#deni").remove();
-		$("#gran").remove();
-	},
- 
-	addText:function(key){//Main function to add the code
-		if(key.keyCode==18){// key 18 = alt key
-			Typer.accessCount++; //increase counter 
-			if(Typer.accessCount>=3){// if it's presed 3 times
-				Typer.makeAccess(); // make access popup
-			}
-		}else if(key.keyCode==20){// key 20 = caps lock
-			Typer.deniedCount++; // increase counter
-			if(Typer.deniedCount>=3){ // if it's pressed 3 times
-				Typer.makeDenied(); // make denied popup
-			}
-		}else if(key.keyCode==27){ // key 27 = esc key
-			Typer.hidepop(); // hide all popups
-		}else if(Typer.text){ // otherway if text is loaded
-			var cont=Typer.content(); // get the console content
-			if(cont.substring(cont.length-1,cont.length)=="|") // if the last char is the blinking cursor
-				$("#console").html($("#console").html().substring(0,cont.length-1)); // remove it before adding the text
-			if(key.keyCode!=8){ // if key is not backspace
-				Typer.index+=Typer.speed;	// add to the index the speed
-			}else{
-				if(Typer.index>0) // else if index is not less than 0 
-					Typer.index-=Typer.speed;//	remove speed for deleting text
-			}
-			var text=Typer.text.substring(0,Typer.index)// parse the text for stripping html enities
-			var rtn= new RegExp("\n", "g"); // newline regex
-	
-			$("#console").html(text.replace(rtn,"<br/>"));// replace newline chars with br, tabs with 4 space and blanks with an html blank
-			window.scrollBy(0,50); // scroll to make sure bottom is always visible
-		}
-		if ( key.preventDefault && key.keyCode != 122 ) { // prevent F11(fullscreen) from being blocked
-			key.preventDefault()
-		};  
-		if(key.keyCode != 122){ // otherway prevent keys default behavior
-			key.returnValue = false;
-		}
-	},
- 
-	updLstChr:function(){ // blinking cursor
-		var cont=this.content(); // get console 
-		if(cont.substring(cont.length-1,cont.length)=="|") // if last char is the cursor
-			$("#console").html($("#console").html().substring(0,cont.length-1)); // remove it
-		else
-			this.write("|"); // else write it
-	}
-}
- 
-function replaceUrls(text) {
-	var http = text.indexOf("http://");
-	var space = text.indexOf(".me ", http);
-	if (space != -1) { 
-		var url = text.slice(http, space-1);
-		return text.replace(url, "<a href=\""  + url + "\">" + url + "</a>");
-	} else {
-	return text
-}
-}
-Typer.speed=3;
-Typer.file="saoud.txt";
-Typer.init();
- 
-var timer = setInterval("t();", 30);
-function t() {
-	Typer.addText({"keyCode": 123748});
-	if (Typer.index > Typer.text.length) {
-		clearInterval(timer);
-	}
-}
- 
-</script> 
-<div id="console"></div> 
-<script type="text/javascript">
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-610661-7']);
-  _gaq.push(['_trackPageview']);
+    html { scroll-behavior: smooth; }
 
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: clamp(0.85rem, 2vw, 1rem);
+      line-height: 1.5;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-</script>
-</body> 
-</html> 
+    /* Subtle CRT scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.15) 0px,
+        rgba(0, 0, 0, 0.15) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* Progress bar */
+    #progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      width: 0%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      transition: width 0.1s linear;
+      z-index: 1001;
+    }
+
+    /* Controls */
+    #controls {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      gap: 0.5rem;
+      z-index: 1002;
+    }
+
+    #controls button {
+      background: transparent;
+      border: 1px solid var(--muted);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 0.25rem 0.75rem;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: all 0.2s ease;
+    }
+
+    #controls button:hover,
+    #controls button:focus-visible {
+      border-color: var(--accent);
+      background: rgba(0, 188, 204, 0.1);
+      outline: none;
+    }
+
+    /* Console */
+    #console {
+      max-width: 750px;
+      width: 90vw;
+      margin: 3rem auto;
+      padding: 1rem;
+      position: relative;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Blinking cursor via CSS pseudo-element */
+    #console.typing::after {
+      content: '█';
+      display: inline;
+      color: var(--accent);
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* Loading state */
+    #loading {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    #loading.error {
+      color: var(--pink);
+    }
+
+    /* Modal overlay for access granted/denied */
+    #modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+
+    #modal.visible {
+      display: flex;
+      animation: fadeIn 0.3s ease;
+    }
+
+    #modal .content {
+      border: 2px solid var(--accent);
+      padding: 2rem 3rem;
+      font-size: clamp(1.2rem, 4vw, 1.5rem);
+      font-weight: 700;
+      text-align: center;
+      background: var(--bg);
+      border-radius: 4px;
+    }
+
+    #modal .content.denied {
+      border-color: var(--pink);
+      color: var(--pink);
+      box-shadow: 0 0 30px var(--pink);
+    }
+
+    #modal .content.granted {
+      border-color: var(--green);
+      color: var(--green);
+      box-shadow: 0 0 30px var(--green);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Completion message */
+    #complete {
+      display: none;
+      text-align: center;
+      color: var(--muted);
+      margin: 2rem auto;
+      padding-bottom: 3rem;
+      font-size: 0.85rem;
+    }
+
+    #complete.visible {
+      display: block;
+      animation: fadeIn 1s ease;
+    }
+
+    /* Keyboard hint */
+    #hint {
+      position: fixed;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--muted);
+      font-size: 0.7rem;
+      z-index: 1002;
+      opacity: 0.6;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      #console {
+        margin: 2.5rem auto;
+        padding: 0.5rem;
+      }
+      #controls {
+        top: 0.5rem;
+        right: 0.5rem;
+      }
+      #hint { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="progress"></div>
+
+  <div id="controls">
+    <button id="pauseBtn" aria-label="Pause or resume typing">⏸ Pause</button>
+    <button id="restartBtn" aria-label="Restart typing">↻ Restart</button>
+  </div>
+
+  <div id="console" class="typing" aria-live="polite" role="log">
+    <span id="loading">Loading...</span>
+  </div>
+
+  <div id="complete">— end of transmission —</div>
+
+  <div id="hint">press any key to type faster · space to pause</div>
+
+  <div id="modal" role="dialog" aria-modal="true">
+    <div class="content" id="modalContent"></div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const CONFIG = {
+        textFile: 'saoud.txt',
+        charsPerFrame: 3,
+        frameInterval: 30,
+        accessChance: 0.01,
+        access: {
+          granted: { msg: 'ACCESS GRANTED', shown: false },
+          denied: { msg: 'User Not Authorized', shown: false }
+        }
+      };
+
+      const state = {
+        text: '',
+        index: 0,
+        paused: false,
+        complete: false,
+        lastFrameTime: 0,
+        animFrameId: null
+      };
+
+      // DOM references
+      const consoleEl = document.getElementById('console');
+      const loadingEl = document.getElementById('loading');
+      const progressEl = document.getElementById('progress');
+      const completeEl = document.getElementById('complete');
+      const modalEl = document.getElementById('modal');
+      const modalContentEl = document.getElementById('modalContent');
+      const pauseBtn = document.getElementById('pauseBtn');
+      const restartBtn = document.getElementById('restartBtn');
+
+      // --- Text loading ---
+      async function loadText() {
+        try {
+          const response = await fetch(CONFIG.textFile);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          state.text = await response.text();
+          loadingEl.remove();
+          startAnimation();
+        } catch (err) {
+          loadingEl.textContent = `Failed to load ${CONFIG.textFile}: ${err.message}`;
+          loadingEl.classList.add('error');
+          consoleEl.classList.remove('typing');
+        }
+      }
+
+      // --- Animation loop (requestAnimationFrame) ---
+      function startAnimation() {
+        state.lastFrameTime = performance.now();
+        state.animFrameId = requestAnimationFrame(tick);
+      }
+
+      function tick(now) {
+        if (state.complete) return;
+        if (!state.paused) {
+          const elapsed = now - state.lastFrameTime;
+          if (elapsed >= CONFIG.frameInterval) {
+            advance(CONFIG.charsPerFrame);
+            state.lastFrameTime = now;
+          }
+        }
+        state.animFrameId = requestAnimationFrame(tick);
+      }
+
+      function advance(count) {
+        if (state.index >= state.text.length) {
+          onComplete();
+          return;
+        }
+        state.index = Math.min(state.index + count, state.text.length);
+        render();
+        updateProgress();
+      }
+
+      function render() {
+        // Cursor is handled by CSS ::after on #console
+        consoleEl.firstChild
+          ? (consoleEl.childNodes[0].nodeType === 3
+              ? consoleEl.childNodes[0].textContent = state.text.substring(0, state.index)
+              : consoleEl.insertBefore(
+                  document.createTextNode(state.text.substring(0, state.index)),
+                  consoleEl.firstChild))
+          : (consoleEl.textContent = state.text.substring(0, state.index));
+
+        // Auto-scroll to bottom
+        window.scrollTo(0, document.body.scrollHeight);
+      }
+
+      function updateProgress() {
+        const pct = (state.index / state.text.length) * 100;
+        progressEl.style.width = `${pct}%`;
+      }
+
+      function onComplete() {
+        state.complete = true;
+        consoleEl.classList.remove('typing');
+        completeEl.classList.add('visible');
+        progressEl.style.width = '100%';
+      }
+
+      // --- Modal ---
+      function showModal(msg, type) {
+        modalContentEl.textContent = msg;
+        modalContentEl.className = `content ${type}`;
+        modalEl.classList.add('visible');
+        setTimeout(() => modalEl.classList.remove('visible'), 1500);
+      }
+
+      // --- Controls ---
+      function togglePause() {
+        state.paused = !state.paused;
+        pauseBtn.textContent = state.paused ? '▶ Resume' : '⏸ Pause';
+        if (!state.paused) {
+          state.lastFrameTime = performance.now();
+        }
+      }
+
+      function restart() {
+        state.index = 0;
+        state.paused = false;
+        state.complete = false;
+        CONFIG.access.granted.shown = false;
+        CONFIG.access.denied.shown = false;
+        pauseBtn.textContent = '⏸ Pause';
+        completeEl.classList.remove('visible');
+        consoleEl.classList.add('typing');
+        consoleEl.textContent = '';
+        updateProgress();
+        startAnimation();
+      }
+
+      pauseBtn.addEventListener('click', togglePause);
+      restartBtn.addEventListener('click', restart);
+
+      // --- Keypress handling ---
+      document.addEventListener('keydown', (e) => {
+        // Close modal on any key
+        if (modalEl.classList.contains('visible')) {
+          modalEl.classList.remove('visible');
+        }
+
+        if (state.complete) return;
+
+        // Space toggles pause
+        if (e.code === 'Space') {
+          e.preventDefault();
+          togglePause();
+          return;
+        }
+
+        // Any other key advances text faster and may trigger access modal
+        if (!state.paused) {
+          advance(CONFIG.charsPerFrame * 3);
+        }
+
+        // Random access granted/denied
+        if (!CONFIG.access.granted.shown && Math.random() < CONFIG.accessChance) {
+          CONFIG.access.granted.shown = true;
+          showModal(CONFIG.access.granted.msg, 'granted');
+        }
+        if (!CONFIG.access.denied.shown && Math.random() < CONFIG.accessChance) {
+          CONFIG.access.denied.shown = true;
+          showModal(CONFIG.access.denied.msg, 'denied');
+        }
+      });
+
+      // Close modal on click
+      modalEl.addEventListener('click', () => modalEl.classList.remove('visible'));
+
+      // --- Boot ---
+      loadText();
+    })();
+  </script>
+</body>
+</html>
