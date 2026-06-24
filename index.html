@@ -27,7 +27,7 @@
       color: var(--text);
       font-family: var(--font-mono);
       font-size: clamp(0.85rem, 2vw, 1rem);
-      line-height: 1.5;
+      line-height: 1.6;
       min-height: 100vh;
       overflow-x: hidden;
     }
@@ -39,8 +39,8 @@
       inset: 0;
       background: repeating-linear-gradient(
         0deg,
-        rgba(0, 0, 0, 0.15) 0px,
-        rgba(0, 0, 0, 0.15) 1px,
+        rgba(0, 0, 0, 0.12) 0px,
+        rgba(0, 0, 0, 0.12) 1px,
         transparent 1px,
         transparent 3px
       );
@@ -90,7 +90,7 @@
       outline: none;
     }
 
-    /* Console */
+    /* Console container */
     #console {
       max-width: 750px;
       width: 90vw;
@@ -101,8 +101,35 @@
       word-break: break-word;
     }
 
-    /* Blinking cursor via CSS pseudo-element */
-    #console.typing::after {
+    /* Colored spans matching original: #a = green (user), #b = pink (dir), #c = accent ($ prompt) */
+    #console #a { color: var(--green); }
+    #console #b { color: var(--pink); }
+    #console #c { color: var(--accent); }
+
+    /* Links inside the typed content */
+    #console a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: text-shadow 0.2s ease;
+    }
+
+    #console a:hover,
+    #console a:focus-visible {
+      text-shadow: 0 0 6px var(--accent);
+      outline: none;
+    }
+
+    /* Paragraphs inside typed content */
+    #console p {
+      margin: 0.75em 0;
+    }
+
+    /* Blinking cursor via CSS pseudo-element on the text wrapper */
+    #text-wrapper {
+      display: inline;
+    }
+
+    #console.typing #text-wrapper::after {
       content: '█';
       display: inline;
       color: var(--accent);
@@ -148,6 +175,7 @@
       text-align: center;
       background: var(--bg);
       border-radius: 4px;
+      font-family: var(--font-mono);
     }
 
     #modal .content.denied {
@@ -218,11 +246,12 @@
 
   <div id="console" class="typing" aria-live="polite" role="log">
     <span id="loading">Loading...</span>
+    <span id="text-wrapper"></span>
   </div>
 
   <div id="complete">— end of transmission —</div>
 
-  <div id="hint">press any key to type faster · space to pause</div>
+  <div id="hint">press any key to type faster · space to pause · alt×3 = access granted · caps×3 = access denied</div>
 
   <div id="modal" role="dialog" aria-modal="true">
     <div class="content" id="modalContent"></div>
@@ -236,10 +265,10 @@
         textFile: 'saoud.txt',
         charsPerFrame: 3,
         frameInterval: 30,
-        accessChance: 0.01,
+        keypressMultiplier: 3,
         access: {
           granted: { msg: 'ACCESS GRANTED', shown: false },
-          denied: { msg: 'User Not Authorized', shown: false }
+          denied:  { msg: 'ACCESS DENIED',  shown: false }
         }
       };
 
@@ -248,26 +277,30 @@
         index: 0,
         paused: false,
         complete: false,
+        accessCount: 0,
+        deniedCount: 0,
         lastFrameTime: 0,
         animFrameId: null
       };
 
       // DOM references
-      const consoleEl = document.getElementById('console');
-      const loadingEl = document.getElementById('loading');
-      const progressEl = document.getElementById('progress');
-      const completeEl = document.getElementById('complete');
-      const modalEl = document.getElementById('modal');
+      const consoleEl      = document.getElementById('console');
+      const loadingEl      = document.getElementById('loading');
+      const textWrapperEl  = document.getElementById('text-wrapper');
+      const progressEl     = document.getElementById('progress');
+      const completeEl     = document.getElementById('complete');
+      const modalEl        = document.getElementById('modal');
       const modalContentEl = document.getElementById('modalContent');
-      const pauseBtn = document.getElementById('pauseBtn');
-      const restartBtn = document.getElementById('restartBtn');
+      const pauseBtn       = document.getElementById('pauseBtn');
+      const restartBtn     = document.getElementById('restartBtn');
 
       // --- Text loading ---
       async function loadText() {
         try {
           const response = await fetch(CONFIG.textFile);
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          state.text = await response.text();
+          // Remove trailing character (usually a trailing newline) like the original
+          state.text = (await response.text()).slice(0, -1);
           loadingEl.remove();
           startAnimation();
         } catch (err) {
@@ -277,7 +310,7 @@
         }
       }
 
-      // --- Animation loop (requestAnimationFrame) ---
+      // --- Animation loop ---
       function startAnimation() {
         state.lastFrameTime = performance.now();
         state.animFrameId = requestAnimationFrame(tick);
@@ -306,14 +339,12 @@
       }
 
       function render() {
-        // Cursor is handled by CSS ::after on #console
-        consoleEl.firstChild
-          ? (consoleEl.childNodes[0].nodeType === 3
-              ? consoleEl.childNodes[0].textContent = state.text.substring(0, state.index)
-              : consoleEl.insertBefore(
-                  document.createTextNode(state.text.substring(0, state.index)),
-                  consoleEl.firstChild))
-          : (consoleEl.textContent = state.text.substring(0, state.index));
+        // Take the substring of raw text, replace newlines with <br/>,
+        // and inject as innerHTML — matching the original behavior so that
+        // HTML tags in saoud.txt (spans, paragraphs, links, comments) render properly.
+        const raw = state.text.substring(0, state.index);
+        const html = raw.replace(/\n/g, '<br/>');
+        textWrapperEl.innerHTML = html;
 
         // Auto-scroll to bottom
         window.scrollTo(0, document.body.scrollHeight);
@@ -339,6 +370,10 @@
         setTimeout(() => modalEl.classList.remove('visible'), 1500);
       }
 
+      function hideModal() {
+        modalEl.classList.remove('visible');
+      }
+
       // --- Controls ---
       function togglePause() {
         state.paused = !state.paused;
@@ -352,12 +387,14 @@
         state.index = 0;
         state.paused = false;
         state.complete = false;
+        state.accessCount = 0;
+        state.deniedCount = 0;
         CONFIG.access.granted.shown = false;
         CONFIG.access.denied.shown = false;
         pauseBtn.textContent = '⏸ Pause';
         completeEl.classList.remove('visible');
         consoleEl.classList.add('typing');
-        consoleEl.textContent = '';
+        textWrapperEl.innerHTML = '';
         updateProgress();
         startAnimation();
       }
@@ -365,40 +402,64 @@
       pauseBtn.addEventListener('click', togglePause);
       restartBtn.addEventListener('click', restart);
 
-      // --- Keypress handling ---
+      // --- Keypress handling (matches original key bindings) ---
       document.addEventListener('keydown', (e) => {
         // Close modal on any key
         if (modalEl.classList.contains('visible')) {
-          modalEl.classList.remove('visible');
+          hideModal();
         }
 
         if (state.complete) return;
 
-        // Space toggles pause
+        // Alt key (keyCode 18) → Access Granted after 3 presses
+        if (e.keyCode === 18) {
+          state.accessCount++;
+          if (state.accessCount >= 3) {
+            showModal(CONFIG.access.granted.msg, 'granted');
+            state.accessCount = 0;
+          }
+          e.preventDefault();
+          return;
+        }
+
+        // Caps Lock (keyCode 20) → Access Denied after 3 presses
+        if (e.keyCode === 20) {
+          state.deniedCount++;
+          if (state.deniedCount >= 3) {
+            showModal(CONFIG.access.denied.msg, 'denied');
+            state.deniedCount = 0;
+          }
+          e.preventDefault();
+          return;
+        }
+
+        // Escape → hide modal
+        if (e.keyCode === 27) {
+          hideModal();
+          e.preventDefault();
+          return;
+        }
+
+        // Space → toggle pause
         if (e.code === 'Space') {
           e.preventDefault();
           togglePause();
           return;
         }
 
-        // Any other key advances text faster and may trigger access modal
+        // Any other key → advance text faster (like original keypress behavior)
         if (!state.paused) {
-          advance(CONFIG.charsPerFrame * 3);
+          advance(CONFIG.charsPerFrame * CONFIG.keypressMultiplier);
         }
 
-        // Random access granted/denied
-        if (!CONFIG.access.granted.shown && Math.random() < CONFIG.accessChance) {
-          CONFIG.access.granted.shown = true;
-          showModal(CONFIG.access.granted.msg, 'granted');
-        }
-        if (!CONFIG.access.denied.shown && Math.random() < CONFIG.accessChance) {
-          CONFIG.access.denied.shown = true;
-          showModal(CONFIG.access.denied.msg, 'denied');
+        // Prevent default for everything except F11 (fullscreen)
+        if (e.preventDefault && e.keyCode !== 122) {
+          e.preventDefault();
         }
       });
 
       // Close modal on click
-      modalEl.addEventListener('click', () => modalEl.classList.remove('visible'));
+      modalEl.addEventListener('click', hideModal);
 
       // --- Boot ---
       loadText();
