@@ -176,6 +176,7 @@
       background: var(--bg);
       border-radius: 4px;
       font-family: var(--font-mono);
+      white-space: pre-wrap;
     }
 
     #modal .content.denied {
@@ -220,6 +221,8 @@
       font-size: 0.7rem;
       z-index: 1002;
       opacity: 0.6;
+      text-align: center;
+      width: 90vw;
     }
 
     /* Responsive */
@@ -251,7 +254,7 @@
 
   <div id="complete">— end of transmission —</div>
 
-  <div id="hint">press any key to type faster · space to pause · alt×3 = access granted · caps×3 = access denied</div>
+  <div id="hint">type 'resume' to view my resume · space to pause · alt×3 = access granted</div>
 
   <div id="modal" role="dialog" aria-modal="true">
     <div class="content" id="modalContent"></div>
@@ -263,6 +266,7 @@
 
       const CONFIG = {
         textFile: 'saoud.txt',
+        resumeFile: 'resume.pdf',
         charsPerFrame: 3,
         frameInterval: 30,
         keypressMultiplier: 3,
@@ -338,27 +342,25 @@
         updateProgress();
       }
 
-     function render() {
+      function render() {
         // Take the substring of raw text
         let raw = state.text.substring(0, state.index);
 
-        // Ensure we don't cut off in the middle of an HTML tag
-        // Find the last '>' (closes a tag) and check if there's an unclosed '<' after it
-        const lastClose = raw.lastIndexOf('>');
+        // Ensure we don't cut off in the middle of an HTML tag.
+        // If the last '<' comes after the last '>', we have an unclosed tag —
+        // truncate to before it so the browser only sees complete tags.
         const lastOpen = raw.lastIndexOf('<');
+        const lastClose = raw.lastIndexOf('>');
+        if (lastOpen > lastClose) {
+          raw = raw.substring(0, lastOpen);
+        }
 
-      // If there's an unclosed tag (last '<' comes after last '>'), truncate to before it
-      if (lastOpen > lastClose) {
-      raw = raw.substring(0, lastOpen);
-    }
+        const html = raw.replace(/\n/g, '<br/>');
+        textWrapperEl.innerHTML = html;
 
-      const html = raw.replace(/\n/g, '<br/>');
-      textWrapperEl.innerHTML = html;
-
-      // Auto-scroll to bottom
-      window.scrollTo(0, document.body.scrollHeight);
-    }
-
+        // Auto-scroll to bottom
+        window.scrollTo(0, document.body.scrollHeight);
+      }
 
       function updateProgress() {
         const pct = (state.index / state.text.length) * 100;
@@ -377,7 +379,7 @@
         modalContentEl.textContent = msg;
         modalContentEl.className = `content ${type}`;
         modalEl.classList.add('visible');
-        setTimeout(() => modalEl.classList.remove('visible'), 1500);
+        setTimeout(() => modalEl.classList.remove('visible'), 2500);
       }
 
       function hideModal() {
@@ -412,14 +414,42 @@
       pauseBtn.addEventListener('click', togglePause);
       restartBtn.addEventListener('click', restart);
 
-      // --- Keypress handling (matches original key bindings) ---
+      // --- Command handling ---
+      function handleCommand(input) {
+        const cmd = input.trim().toLowerCase();
+
+        if (cmd.includes('resume')) {
+          window.open(CONFIG.resumeFile, '_blank');
+          return true;
+        }
+
+        if (cmd.includes('help')) {
+          showModal('Available commands:\nresume — view my resume\nhelp   — show this message\nclear  — restart the animation', 'granted');
+          return true;
+        }
+
+        if (cmd.includes('clear')) {
+          restart();
+          return true;
+        }
+
+        return false;
+      }
+
+      function getLastTypedCommand() {
+        // Walk the rendered DOM looking for the last text segment after a $ prompt.
+        // Fallback: just grab the last visible line from textContent.
+        const text = textWrapperEl.textContent || '';
+        const lines = text.split(/\n/);
+        return lines[lines.length - 1] || '';
+      }
+
+      // --- Keypress handling ---
       document.addEventListener('keydown', (e) => {
         // Close modal on any key
         if (modalEl.classList.contains('visible')) {
           hideModal();
         }
-
-        if (state.complete) return;
 
         // Alt key (keyCode 18) → Access Granted after 3 presses
         if (e.keyCode === 18) {
@@ -456,6 +486,16 @@
           togglePause();
           return;
         }
+
+        // Enter → check for command
+        if (e.code === 'Enter') {
+          const lastLine = getLastTypedCommand();
+          handleCommand(lastLine);
+          e.preventDefault();
+          return;
+        }
+
+        if (state.complete) return;
 
         // Any other key → advance text faster (like original keypress behavior)
         if (!state.paused) {
