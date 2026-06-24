@@ -142,32 +142,46 @@
       color: var(--pink);
     }
 
-    /* Command input area */
-    #command-input {
+    /* Command input area - always visible */
+    #command-area {
       max-width: 750px;
       width: 90vw;
-      margin: 0 auto;
-      padding: 0 1rem 2rem;
-      display: none;
+      margin: 0 auto 2rem;
+      padding: 0 1rem;
     }
 
-    #command-input.visible {
-      display: block;
+    #command-area .prompt-line {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
-    #command-input .prompt {
+    #command-area .prompt {
       color: var(--green);
+      white-space: nowrap;
     }
 
-    #command-input input {
+    #cmdInput {
       background: transparent;
       border: none;
+      border-bottom: 1px solid var(--muted);
       color: var(--text);
       font-family: var(--font-mono);
       font-size: inherit;
       outline: none;
-      width: calc(100% - 200px);
+      flex: 1;
+      padding: 0.25rem 0;
       caret-color: var(--accent);
+      transition: border-color 0.2s ease;
+    }
+
+    #cmdInput:focus {
+      border-bottom-color: var(--accent);
+    }
+
+    #cmdInput::placeholder {
+      color: var(--muted);
+      opacity: 0.5;
     }
 
     #modal {
@@ -219,7 +233,7 @@
       text-align: center;
       color: var(--muted);
       margin: 2rem auto;
-      padding-bottom: 3rem;
+      padding-bottom: 1rem;
       font-size: 0.85rem;
     }
 
@@ -267,14 +281,16 @@
     <span id="text-wrapper"></span>
   </div>
 
-  <div id="command-input">
-    <span class="prompt">saoud@saoud.eu:~$ </span>
-    <input type="text" id="cmdInput" autocomplete="off" autofocus placeholder="type a command...">
-  </div>
-
   <div id="complete">— end of transmission —</div>
 
-  <div id="hint">press any key to speed up · space to pause · type 'resume' when ready</div>
+  <div id="command-area">
+    <div class="prompt-line">
+      <span class="prompt">saoud@saoud.eu:~$</span>
+      <input type="text" id="cmdInput" autocomplete="off" placeholder="type a command (try 'resume' or 'help')...">
+    </div>
+  </div>
+
+  <div id="hint">type in the input above · space to pause animation · alt×3 = access granted</div>
 
   <div id="modal" role="dialog" aria-modal="true">
     <div class="content" id="modalContent"></div>
@@ -316,7 +332,6 @@
       const modalContentEl = document.getElementById('modalContent');
       const pauseBtn       = document.getElementById('pauseBtn');
       const restartBtn     = document.getElementById('restartBtn');
-      const commandInputEl = document.getElementById('command-input');
       const cmdInput       = document.getElementById('cmdInput');
 
       async function loadText() {
@@ -386,9 +401,8 @@
         completeEl.classList.add('visible');
         progressEl.style.width = '100%';
 
-        // Show command input when animation completes
-        commandInputEl.classList.add('visible');
-        cmdInput.focus();
+        // Focus the command input
+        setTimeout(() => cmdInput.focus(), 100);
       }
 
       function showModal(msg, type) {
@@ -420,7 +434,6 @@
         CONFIG.access.denied.shown = false;
         pauseBtn.textContent = '⏸ Pause';
         completeEl.classList.remove('visible');
-        commandInputEl.classList.remove('visible');
         cmdInput.value = '';
         consoleEl.classList.add('typing');
         textWrapperEl.innerHTML = '';
@@ -456,59 +469,32 @@
         return false;
       }
 
-      // Command input handling
+      // Command input - handle Enter key
       cmdInput.addEventListener('keydown', (e) => {
         if (e.code === 'Enter') {
+          e.preventDefault();
           const cmd = cmdInput.value;
           handleCommand(cmd);
           cmdInput.value = '';
-          e.preventDefault();
         }
+        // Stop propagation so global handler doesn't interfere
+        e.stopPropagation();
       });
 
-      // Global key handling (for animation speed and special keys)
+      // Click on command area to focus input
+      document.getElementById('command-area').addEventListener('click', () => {
+        cmdInput.focus();
+      });
+
+      // Global key handling (only when input is NOT focused)
       document.addEventListener('keydown', (e) => {
-        if (modalEl.classList.contains('visible')) {
-          hideModal();
+        // If command input is focused, don't handle keys globally
+        if (document.activeElement === cmdInput) {
+          return;
         }
 
-        // Don't handle keys if command input is focused (except special keys)
-        if (document.activeElement === cmdInput) {
-          // Alt key → Access Granted after 3 presses
-          if (e.keyCode === 18) {
-            state.accessCount++;
-            if (state.accessCount >= 3) {
-              showModal(CONFIG.access.granted.msg, 'granted');
-              state.accessCount = 0;
-            }
-            e.preventDefault();
-            return;
-          }
-
-          // Caps Lock → Access Denied after 3 presses
-          if (e.keyCode === 20) {
-            state.deniedCount++;
-            if (state.deniedCount >= 3) {
-              showModal(CONFIG.access.denied.msg, 'denied');
-              state.deniedCount = 0;
-            }
-            e.preventDefault();
-            return;
-          }
-
-          // Escape → hide modal or blur input
-          if (e.keyCode === 27) {
-            if (modalEl.classList.contains('visible')) {
-              hideModal();
-            } else {
-              cmdInput.blur();
-            }
-            e.preventDefault();
-            return;
-          }
-
-          // Let other keys pass through to input
-          return;
+        if (modalEl.classList.contains('visible')) {
+          hideModal();
         }
 
         // Alt key → Access Granted after 3 presses
@@ -547,8 +533,8 @@
           return;
         }
 
-        // Tab → focus command input if animation is complete
-        if (e.code === 'Tab' && state.complete) {
+        // Tab → focus command input
+        if (e.code === 'Tab') {
           e.preventDefault();
           cmdInput.focus();
           return;
