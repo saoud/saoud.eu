@@ -1,4 +1,36 @@
-<span id="a">saoud@saoud.eu</span>:<span id="b">~</span><span id="c">$</span> cat saoud.txt<br/><br/>
-Hi, I'm Saoud.<!-- laglaglaglaglaglaglaglaglaglaglaglag --><p>I have always had a passion for technology. I decided to take a round about way to get here but I am happy to have ended up where I am. I tried medical school overseas for 3.5 years before decding that I wanted to go back to tech. Even in high school I ran a small computer company where I would build and service desktops.</p><!- oqwipjefqwioefjwioqfjoiqwjfeioqwjefoi -->
-<p>I got started with technology at the age of 6 or so when my parents got me an Apple IIC desktop. Since then I developed a passion for all things tech related and has it has only grown since then with a slight detour along the journey.</p><!-- owlsqweoifjqwoefijqwoeifjqwoefijwef -->
-If you would like to get in touch with me, whether it be for tech support, a business venture, or to just say hi<!-- slightdelayhere-->, feel free to reach out to me.<!-- longlongcomment --> My email address is: <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#115;&#97;&#111;&#117;&#100;&#64;&#115;&#97;&#111;&#117;&#100;&#46;&#100;&#101;&#118;">&#115;&#97;&#111;&#117;&#100;&#64;&#115;&#97;&#111;&#117;&#100;&#46;&#100;&#101;&#118;</a>. I started blogging my journey a bit, you can check it out at which is now no longer active: <a href="https://dev.to/saoud">dev.to/saoud</a>
+<span id="a">saoud@saoud.eu</span>:<span id="b">~</span><span id="c">$</span> whoami<br/>
+Saoud<span id="c">$</span> cat about.txt<br/><br/>
+Hi, I'm Saoud.<!-- loading_bio_modules... --> I'm based in Dubai, UAE, and I've spent over a decade building, breaking, and fixing technology across healthcare, fintech, infrastructure, and now AI-driven PropTech.<p>I got started with technology at the age of 6 when my parents got me an Apple IIC desktop. Since then, I've developed a passion for all things tech-related, and it has only grown over the years — with a slight detour along the journey.</p><!-- compiling_early_memories... -->
+<p>I tried medical school overseas for 3.5 years before deciding that I wanted to go back to tech. Even in high school, I ran a small computer company where I would build and service desktops. That roundabout path taught me resilience and gave me a unique perspective on problem-solving.</p><!-- redirecting_career_path... -->
+<span id="a">saoud@saoud.eu</span>:<span id="b">~</span><span id="c">$</span> cat experience.txt<br/><br/>
+<span id="a">[2026–Present]</span> <span id="b">Technical Architect & Product Lead</span><br/>
+PropTech Automation Agency / Consultancy — Dubai, UAE<br/>
+Building an n8n + Python "Lead-to-Lease" AI automation system for UAE real estate. Orchestrating LLM workflows, prompt engineering, and AI agents that transform how properties are marketed and leased.<!-- initializing_ai_agents... --><br/><br/>
+<span id="a">[2024–2025]</span> <span id="b">Engineering Lead & Cloud Architect</span><br/>
+BlockMaven<br/>
+Built AWS infrastructure from zero, established CI/CD pipelines, and secured funding with blockchain/AI pitches. Led high-availability systems and DevSecOps practices.<!-- deploying_cloud_infrastructure... --><br/><br/>
+<span id="a">[2022–2024]</span> <span id="b">Senior Platform Ops Engineer</span><br/>
+Credly / Pearson<br/>
+Ruby scripting, API debugging, SLA management. Kept the platform humming at scale.<!-- optimizing_platform_ops... --><br/><br/>
+<span id="a">[2021–2022]</span> <span id="b">Senior Infrastructure Engineer</span><br/>
+Lyell<br/>
+Biomedical manufacturing IT, zero-touch onboarding, CrowdStrike rollout. Security-first infrastructure for a high-compliance environment.<!-- securing_endpoints... --><br/><br/>
+<span id="a">[2019–2020]</span> <span id="b">SRE & SecOps</span><br/>
+98point6<br/>
+HIPAA-compliant virtual clinic infrastructure. Achieved 60x onboarding improvement with Terraform IaC. Automation over manual processes.<!-- terraforming_infrastructure... --><br/><br/>
+<span id="a">[2018–2019]</span> <span id="b">Technical Solutions Engineer</span><br/>
+Google<br/>
+Pre-release metering device pilots. Working at the cutting edge of hardware and software integration.<!-- piloting_next_gen_tech... --><br/><br/>
+<span id="a">[2015–2017]</span> <span id="b">Technical Services Rep</span><br/>
+Speedtest.net / Ookla<br/>
+The beginning of the professional journey. Learning how the internet really works at scale.<!-- measuring_the_internet... --><br/><br/>
+<span id="a">[Earlier]</span> Head of IT at Baymeadows Healthcare, CTO at Computer Insanity, and roles at Starbucks and Automotive Addicts.<!-- building_foundation... -->
+<span id="a">saoud@saoud.eu</span>:<span id="b">~</span><span id="c">$</span> cat skills.txt<br/><br/>
+<span id="b">Cloud & Infrastructure:</span> AWS, Terraform, CI/CD, DevSecOps, High-Availability Systems<br/>
+<span id="b">AI & Automation:</span> LLM Orchestration, n8n Workflows, Prompt Engineering, Python, AI Agents<br/>
+<span id="b">DevOps & Security:</span> CrowdStrike, HIPAA Compliance, Zero-Touch Onboarding, IaC<br/>
+<span id="b">Languages:</span> English, Urdu (native), Punjabi (conversational), ASL (fluent)<!-- multilingual_mode... -->
+<span id="a">saoud@saoud.eu</span>:<span id="b">~</span><span id="c">$</span> cat contact.txt<br/><br/>
+If you'd like to get in touch — whether for tech support, a business venture, or just to say hi — feel free to reach out.<!-- encrypting_contact_info... --> My email address is: <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#115;&#97;&#111;&#117;&#100;&#64;&#115;&#97;&#111;&#117;&#100;&#46;&#100;&#101;&#118;">&#115;&#97;&#111;&#117;&#100;&#64;&#115;&#97;&#111;&#117;&#100;&#46;&#100;&#101;&#118;</a>.<br/><br/>
+You can also find me on <a href="https://linkedin.com/in/saoud/">LinkedIn</a> and <a href="https://github.com/saoud">GitHub</a>.<!-- establishing_secure_connection... --><br/><br/>
+I also used to blog about my journey at <a href="https://dev.to/saoud">dev.to/saoud</a> (now archived).<!-- connection_established -->
