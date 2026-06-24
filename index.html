@@ -338,17 +338,27 @@
         updateProgress();
       }
 
-      function render() {
-        // Take the substring of raw text, replace newlines with <br/>,
-        // and inject as innerHTML — matching the original behavior so that
-        // HTML tags in saoud.txt (spans, paragraphs, links, comments) render properly.
-        const raw = state.text.substring(0, state.index);
-        const html = raw.replace(/\n/g, '<br/>');
-        textWrapperEl.innerHTML = html;
+     function render() {
+        // Take the substring of raw text
+        let raw = state.text.substring(0, state.index);
 
-        // Auto-scroll to bottom
-        window.scrollTo(0, document.body.scrollHeight);
-      }
+        // Ensure we don't cut off in the middle of an HTML tag
+        // Find the last '>' (closes a tag) and check if there's an unclosed '<' after it
+        const lastClose = raw.lastIndexOf('>');
+        const lastOpen = raw.lastIndexOf('<');
+
+      // If there's an unclosed tag (last '<' comes after last '>'), truncate to before it
+      if (lastOpen > lastClose) {
+      raw = raw.substring(0, lastOpen);
+    }
+
+      const html = raw.replace(/\n/g, '<br/>');
+      textWrapperEl.innerHTML = html;
+
+      // Auto-scroll to bottom
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+
 
       function updateProgress() {
         const pct = (state.index / state.text.length) * 100;
