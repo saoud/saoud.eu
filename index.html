@@ -32,7 +32,6 @@
       overflow-x: hidden;
     }
 
-    /* Subtle CRT scanline overlay */
     body::before {
       content: '';
       position: fixed;
@@ -48,7 +47,6 @@
       z-index: 1000;
     }
 
-    /* Progress bar */
     #progress {
       position: fixed;
       top: 0;
@@ -61,7 +59,6 @@
       z-index: 1001;
     }
 
-    /* Controls */
     #controls {
       position: fixed;
       top: 1rem;
@@ -90,7 +87,6 @@
       outline: none;
     }
 
-    /* Console container */
     #console {
       max-width: 750px;
       width: 90vw;
@@ -101,12 +97,10 @@
       word-break: break-word;
     }
 
-    /* Colored spans matching original: #a = green (user), #b = pink (dir), #c = accent ($ prompt) */
     #console #a { color: var(--green); }
     #console #b { color: var(--pink); }
     #console #c { color: var(--accent); }
 
-    /* Links inside the typed content */
     #console a {
       color: var(--accent);
       text-decoration: none;
@@ -119,12 +113,10 @@
       outline: none;
     }
 
-    /* Paragraphs inside typed content */
     #console p {
       margin: 0.75em 0;
     }
 
-    /* Blinking cursor via CSS pseudo-element on the text wrapper */
     #text-wrapper {
       display: inline;
     }
@@ -141,7 +133,6 @@
       50% { opacity: 0; }
     }
 
-    /* Loading state */
     #loading {
       color: var(--muted);
       font-style: italic;
@@ -151,7 +142,34 @@
       color: var(--pink);
     }
 
-    /* Modal overlay for access granted/denied */
+    /* Command input area */
+    #command-input {
+      max-width: 750px;
+      width: 90vw;
+      margin: 0 auto;
+      padding: 0 1rem 2rem;
+      display: none;
+    }
+
+    #command-input.visible {
+      display: block;
+    }
+
+    #command-input .prompt {
+      color: var(--green);
+    }
+
+    #command-input input {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: inherit;
+      outline: none;
+      width: calc(100% - 200px);
+      caret-color: var(--accent);
+    }
+
     #modal {
       position: fixed;
       inset: 0;
@@ -196,7 +214,6 @@
       to { opacity: 1; }
     }
 
-    /* Completion message */
     #complete {
       display: none;
       text-align: center;
@@ -211,7 +228,6 @@
       animation: fadeIn 1s ease;
     }
 
-    /* Keyboard hint */
     #hint {
       position: fixed;
       bottom: 1rem;
@@ -225,7 +241,6 @@
       width: 90vw;
     }
 
-    /* Responsive */
     @media (max-width: 600px) {
       #console {
         margin: 2.5rem auto;
@@ -252,9 +267,14 @@
     <span id="text-wrapper"></span>
   </div>
 
+  <div id="command-input">
+    <span class="prompt">saoud@saoud.eu:~$ </span>
+    <input type="text" id="cmdInput" autocomplete="off" autofocus placeholder="type a command...">
+  </div>
+
   <div id="complete">— end of transmission —</div>
 
-  <div id="hint">type 'resume' to view my resume · space to pause · alt×3 = access granted</div>
+  <div id="hint">press any key to speed up · space to pause · type 'resume' when ready</div>
 
   <div id="modal" role="dialog" aria-modal="true">
     <div class="content" id="modalContent"></div>
@@ -287,7 +307,6 @@
         animFrameId: null
       };
 
-      // DOM references
       const consoleEl      = document.getElementById('console');
       const loadingEl      = document.getElementById('loading');
       const textWrapperEl  = document.getElementById('text-wrapper');
@@ -297,13 +316,13 @@
       const modalContentEl = document.getElementById('modalContent');
       const pauseBtn       = document.getElementById('pauseBtn');
       const restartBtn     = document.getElementById('restartBtn');
+      const commandInputEl = document.getElementById('command-input');
+      const cmdInput       = document.getElementById('cmdInput');
 
-      // --- Text loading ---
       async function loadText() {
         try {
           const response = await fetch(CONFIG.textFile);
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          // Remove trailing character (usually a trailing newline) like the original
           state.text = (await response.text()).slice(0, -1);
           loadingEl.remove();
           startAnimation();
@@ -314,7 +333,6 @@
         }
       }
 
-      // --- Animation loop ---
       function startAnimation() {
         state.lastFrameTime = performance.now();
         state.animFrameId = requestAnimationFrame(tick);
@@ -343,12 +361,8 @@
       }
 
       function render() {
-        // Take the substring of raw text
         let raw = state.text.substring(0, state.index);
 
-        // Ensure we don't cut off in the middle of an HTML tag.
-        // If the last '<' comes after the last '>', we have an unclosed tag —
-        // truncate to before it so the browser only sees complete tags.
         const lastOpen = raw.lastIndexOf('<');
         const lastClose = raw.lastIndexOf('>');
         if (lastOpen > lastClose) {
@@ -358,7 +372,6 @@
         const html = raw.replace(/\n/g, '<br/>');
         textWrapperEl.innerHTML = html;
 
-        // Auto-scroll to bottom
         window.scrollTo(0, document.body.scrollHeight);
       }
 
@@ -372,9 +385,12 @@
         consoleEl.classList.remove('typing');
         completeEl.classList.add('visible');
         progressEl.style.width = '100%';
+
+        // Show command input when animation completes
+        commandInputEl.classList.add('visible');
+        cmdInput.focus();
       }
 
-      // --- Modal ---
       function showModal(msg, type) {
         modalContentEl.textContent = msg;
         modalContentEl.className = `content ${type}`;
@@ -386,7 +402,6 @@
         modalEl.classList.remove('visible');
       }
 
-      // --- Controls ---
       function togglePause() {
         state.paused = !state.paused;
         pauseBtn.textContent = state.paused ? '▶ Resume' : '⏸ Pause';
@@ -405,6 +420,8 @@
         CONFIG.access.denied.shown = false;
         pauseBtn.textContent = '⏸ Pause';
         completeEl.classList.remove('visible');
+        commandInputEl.classList.remove('visible');
+        cmdInput.value = '';
         consoleEl.classList.add('typing');
         textWrapperEl.innerHTML = '';
         updateProgress();
@@ -414,44 +431,87 @@
       pauseBtn.addEventListener('click', togglePause);
       restartBtn.addEventListener('click', restart);
 
-      // --- Command handling ---
-      function handleCommand(input) {
-        const cmd = input.trim().toLowerCase();
+      function handleCommand(cmd) {
+        const command = cmd.trim().toLowerCase();
 
-        if (cmd.includes('resume')) {
+        if (command === 'resume') {
           window.open(CONFIG.resumeFile, '_blank');
           return true;
         }
 
-        if (cmd.includes('help')) {
+        if (command === 'help') {
           showModal('Available commands:\nresume — view my resume\nhelp   — show this message\nclear  — restart the animation', 'granted');
           return true;
         }
 
-        if (cmd.includes('clear')) {
+        if (command === 'clear') {
           restart();
           return true;
+        }
+
+        if (command) {
+          showModal(`Command not found: ${command}\nType 'help' for available commands`, 'denied');
         }
 
         return false;
       }
 
-      function getLastTypedCommand() {
-        // Walk the rendered DOM looking for the last text segment after a $ prompt.
-        // Fallback: just grab the last visible line from textContent.
-        const text = textWrapperEl.textContent || '';
-        const lines = text.split(/\n/);
-        return lines[lines.length - 1] || '';
-      }
+      // Command input handling
+      cmdInput.addEventListener('keydown', (e) => {
+        if (e.code === 'Enter') {
+          const cmd = cmdInput.value;
+          handleCommand(cmd);
+          cmdInput.value = '';
+          e.preventDefault();
+        }
+      });
 
-      // --- Keypress handling ---
+      // Global key handling (for animation speed and special keys)
       document.addEventListener('keydown', (e) => {
-        // Close modal on any key
         if (modalEl.classList.contains('visible')) {
           hideModal();
         }
 
-        // Alt key (keyCode 18) → Access Granted after 3 presses
+        // Don't handle keys if command input is focused (except special keys)
+        if (document.activeElement === cmdInput) {
+          // Alt key → Access Granted after 3 presses
+          if (e.keyCode === 18) {
+            state.accessCount++;
+            if (state.accessCount >= 3) {
+              showModal(CONFIG.access.granted.msg, 'granted');
+              state.accessCount = 0;
+            }
+            e.preventDefault();
+            return;
+          }
+
+          // Caps Lock → Access Denied after 3 presses
+          if (e.keyCode === 20) {
+            state.deniedCount++;
+            if (state.deniedCount >= 3) {
+              showModal(CONFIG.access.denied.msg, 'denied');
+              state.deniedCount = 0;
+            }
+            e.preventDefault();
+            return;
+          }
+
+          // Escape → hide modal or blur input
+          if (e.keyCode === 27) {
+            if (modalEl.classList.contains('visible')) {
+              hideModal();
+            } else {
+              cmdInput.blur();
+            }
+            e.preventDefault();
+            return;
+          }
+
+          // Let other keys pass through to input
+          return;
+        }
+
+        // Alt key → Access Granted after 3 presses
         if (e.keyCode === 18) {
           state.accessCount++;
           if (state.accessCount >= 3) {
@@ -462,7 +522,7 @@
           return;
         }
 
-        // Caps Lock (keyCode 20) → Access Denied after 3 presses
+        // Caps Lock → Access Denied after 3 presses
         if (e.keyCode === 20) {
           state.deniedCount++;
           if (state.deniedCount >= 3) {
@@ -487,31 +547,21 @@
           return;
         }
 
-        // Enter → check for command
-        if (e.code === 'Enter') {
-          const lastLine = getLastTypedCommand();
-          handleCommand(lastLine);
+        // Tab → focus command input if animation is complete
+        if (e.code === 'Tab' && state.complete) {
           e.preventDefault();
+          cmdInput.focus();
           return;
         }
 
-        if (state.complete) return;
-
-        // Any other key → advance text faster (like original keypress behavior)
-        if (!state.paused) {
+        // Advance text animation on any keypress (if not paused and not complete)
+        if (!state.complete && !state.paused) {
           advance(CONFIG.charsPerFrame * CONFIG.keypressMultiplier);
-        }
-
-        // Prevent default for everything except F11 (fullscreen)
-        if (e.preventDefault && e.keyCode !== 122) {
-          e.preventDefault();
         }
       });
 
-      // Close modal on click
       modalEl.addEventListener('click', hideModal);
 
-      // --- Boot ---
       loadText();
     })();
   </script>
